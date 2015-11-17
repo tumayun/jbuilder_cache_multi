@@ -42,33 +42,13 @@ JbuilderTemplate.class_eval do
 
   protected
 
-  ## Implementing our own version of _cache_key because jbuilder's is protected
-  def _cache_key_fetch_multi(key, options)
-    key = _fragment_name_with_digest_fetch_multi(key, options)
-    key = url_for(key).split('://', 2).last if ::Hash === key
-    ::ActiveSupport::Cache.expand_cache_key(key, :jbuilder)
-  end
-
-  def _fragment_name_with_digest_fetch_multi(key, options)
-    if @context.respond_to?(:cache_fragment_name)
-      # Current compatibility, fragment_name_with_digest is private again and cache_fragment_name
-      # should be used instead.
-      @context.cache_fragment_name(key, options)
-    elsif @context.respond_to?(:fragment_name_with_digest)
-      # Backwards compatibility for period of time when fragment_name_with_digest was made public.
-      @context.fragment_name_with_digest(key)
-    else
-      key
-    end
-  end
-
   def _keys_to_collection_map(collection, options)
     key = options.delete(:key)
 
     collection.inject({}) do |result, item|
       item_key = key.respond_to?(:call) ? key.call(item) : key
       cache_key = item_key ? [item_key, item] : item
-      result[_cache_key_fetch_multi(cache_key, options)] = item
+      result[_cache_key(cache_key, options)] = item
       result
     end
   end
